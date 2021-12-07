@@ -1,0 +1,47 @@
+import csv
+from os import write
+from pandas.core.frame import DataFrame
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+from datetime import date
+
+today = date.today()
+filename1 = '{}.csv'.format(str(today))
+f = open(filename1, "w")
+
+headers = "1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Average\n"
+
+f.write(headers)
+
+#[1] CSV Import Parse
+
+df1 = pd.read_csv('rsp_zip_codes.csv')
+zip_list = df1['Zip'].to_list()
+  
+#[2] Create zip code specific URL
+
+url_list = []
+for zip in zip_list:
+    url_var = 'https://www.gasbuddy.com/home?search={}&fuel=1&maxAge=0&method=2'.format(str(zip))
+    #create empty list, then append, url var values to empty list
+    url_list.append(url_var)
+
+#[3]Get data in each unique URL
+
+price_list = []
+for url in url_list:
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36'}
+    r = requests.get(url, headers=headers, verify=False)
+    soup = BeautifulSoup(r.content, 'html5lib') 
+    soup1 = str([x.get_text() for x in soup.find_all("span", class_="text__xl___2MXGo text__left___1iOw3 StationDisplayPrice-module__price___3rARL")])
+    soup2 = [x.get_text() for x in soup.find_all("span", class_="text__lg___1S7OO text__bold___1C6Z_ text__left___1iOw3 PriceTrends-module__priceHeader___fB9X9")]
+    soup3 = soup1 + "," + soup2[1]
+    soup4 = soup3.replace("[", "").replace(']', "").replace("'", "").replace(" ", "")
+    
+    
+    
+    
+    f.write(soup4 + "\n")
+    print(soup4)
+f.close()
